@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+          POSTGRES_USER: tradinguser
+          POSTGRES_PASSWORD: tradingpassword
+          POSTGRES_DB: sec_dl
+    ports:
+          - 5432:5432
+    volumes:
+          - /Users/victor/documents/db_store/sec_dl:/var/lib/postgresql/data
+    command: postgres -c 'max_connections=400'
+    shm_size: '2gb'
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
