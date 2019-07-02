@@ -177,14 +177,12 @@ def dl_filing(debug):
 def process_filings(
         debug=False,
         specified_path="edgar/data/826773/0001104659-13-062460.txt"):
-    """Takes in filings URL to download and makes get request to the
-    SEC server. The downloaded text is then sanitized and loaded to the db"""
+    """Download filings in parallel, sanitize and loaded to the db"""
 
     # Download filings
-    #pool = multiprocessing.Pool(CONCURRENT_WORKERS)
-    pool = multiprocessing.Pool(30)
+    pool = multiprocessing.Pool(CONCURRENT_WORKERS)
     while True:
-        pool.map(dl_filing, (debug for x in range(1000)))
+        pool.map_async(dl_filing, (debug for x in range(1000)))
 
 
 if __name__ == "__main__":
