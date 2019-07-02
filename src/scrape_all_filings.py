@@ -114,13 +114,15 @@ def remove_embedded_files(text_filing):
 
     return text_to_insert
 
+
 def dl_filing(debug):
     """Looks up a filing_id from unscraped_filings table and updates the filings table"""
 
     # Quary the db to get a row, note that the Postgresql SYSTEM_ROWS function is fast but does not return truly random rows,
     # To avoid the probability of grabbing the same row as another process, we grab 10 rows and randomly pick one
     # Please refer to Postgresql documentation for more detail
-    engine, filings = connect_db(engine_and_filings_only=True, create_extension=False)
+    engine, filings = connect_db(
+        engine_and_filings_only=True, create_extension=False)
 
     with engine.connect() as connection:
         stmt = """
@@ -165,23 +167,24 @@ def dl_filing(debug):
 
         else:
             stmt = filings.update().where(filings.c.filing_id ==
-                                            row_filing_id).values({'text': text_to_insert})
+                                          row_filing_id).values({'text': text_to_insert})
             connection.execute(stmt)
             print("LOG:", datetime.datetime.now(), "finished", row_filing_id)
-        
-    engine.dispose()
-    
 
-def process_filings(debug=False, specified_path="edgar/data/826773/0001104659-13-062460.txt"):
-    """Takes in filings URL to download and makes get request to the 
+    engine.dispose()
+
+
+def process_filings(
+        debug=False,
+        specified_path="edgar/data/826773/0001104659-13-062460.txt"):
+    """Takes in filings URL to download and makes get request to the
     SEC server. The downloaded text is then sanitized and loaded to the db"""
-    
+
     # Download filings
     #pool = multiprocessing.Pool(CONCURRENT_WORKERS)
     pool = multiprocessing.Pool(30)
     while True:
         pool.map(dl_filing, (debug for x in range(1000)))
-
 
 
 if __name__ == "__main__":
