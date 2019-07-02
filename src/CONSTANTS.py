@@ -6,3 +6,6 @@ DB_HOST="localhost"
 
 # Start and end year of filings to grab
 FILING_START_YR=2012
+
+# Parallel download
+CONCURRENT_WORKERS=20

@@ -9,22 +9,23 @@ from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, String, Column, Text, DateTime, Boolean, Integer, Float, Date
 from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
-from CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME
+from CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME, CONCURRENT_WORKERS
 
 
-def connect_db(create_extension=False, engine_only=False):
+def connect_db(create_extension=False, engine_and_filings_only=False):
     """Make connection to the db"""
 
-    engine = create_engine(
-        f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}",
-        echo=False)
-
-    if not engine_only:
-        connection = engine.connect()
+    if engine_and_filings_only:
+        engine = create_engine(
+            f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}",
+            echo=False)
         metadata = MetaData(bind=engine)
+        filings = Table('filings', metadata, autoload=True)
+
+    else:
+        connection = engine.connect()
         Session = sessionmaker()
         session = Session()
-        filings = Table('filings', metadata, autoload=True)
 
     try:
         # tsm_system_rows extension returns random rows from the database
@@ -33,8 +34,8 @@ def connect_db(create_extension=False, engine_only=False):
     except BaseException:
         print("tsm_system_rows extension already enabled")
 
-    if engine_only:
-        return engine
+    if engine_and_filings_only:
+        return engine, filings
 
     else:
         return engine, metadata, Session, session, connection, filings
@@ -119,7 +120,7 @@ def dl_filing(debug):
     # Quary the db to get a row, note that the Postgresql SYSTEM_ROWS function is fast but does not return truly random rows,
     # To avoid the probability of grabbing the same row as another process, we grab 10 rows and randomly pick one
     # Please refer to Postgresql documentation for more detail
-    engine = connect_db(engine_only=True, create_extension=False)
+    engine, filings = connect_db(engine_and_filings_only=True, create_extension=False)
 
     with engine.connect() as connection:
         stmt = """
@@ -142,7 +143,7 @@ def dl_filing(debug):
         result_list = rows_to_build.fetchall()
 
         row_filing_id, path = result_list[random_row_number]
-        print("LOG: working on {}".format(path))
+        print("LOG: working on {}, filing_id {}".format(path, row_filing_id))
 
         baseurl = 'https://www.sec.gov/Archives/'
 
@@ -166,55 +167,22 @@ def dl_filing(debug):
             stmt = filings.update().where(filings.c.filing_id ==
                                             row_filing_id).values({'text': text_to_insert})
             connection.execute(stmt)
-            #print("LOG:", datetime.datetime.now(), "Done")
+            print("LOG:", datetime.datetime.now(), "finished", row_filing_id)
         
     engine.dispose()
     
 
-def process_filings(
-        engine,
-        metadata,
-        Session,
-        session,
-        connection,
-        filings,
-        random_seed=2,
-        sleep=False,
-        debug=False,
-        specified_path="edgar/data/826773/0001104659-13-062460.txt",
-        calc_time_left=False):
+def process_filings(debug=False, specified_path="edgar/data/826773/0001104659-13-062460.txt"):
     """Takes in filings URL to download and makes get request to the 
     SEC server. The downloaded text is then sanitized and loaded to the db"""
     
     # Download filings
-    pool = multiprocessing.Pool(20)
+    #pool = multiprocessing.Pool(CONCURRENT_WORKERS)
+    pool = multiprocessing.Pool(30)
     while True:
-        pool.map_async(dl_filing, (debug for x in range(1000)))
+        pool.map(dl_filing, (debug for x in range(1000)))
 
 
 
 if __name__ == "__main__":
-    while True:
-        try:
-            engine, metadata, Session, session, connection, filings = connect_db()
-            process_filings(
-                engine,
-                metadata,
-                Session,
-                session,
-                connection,
-                filings,
-                debug=False)
-        except ValueError:
-            print("ERROR:{}: CONNECTION ERROR".format(datetime.datetime.now()))
-            print("LOG: SLEEPING 20")
-            time.sleep(20)
-
-            try:
-                engine.dispose()
-                print("LOG: ENGINE DISPOSED")
-                connection.close()
-                print("LOG: CONNECTION CLOSED")
-            except BaseException:
-                print("LOG: ERROR DISPOSING ENGINE OR CLOSING CONNECTIONS")
-                pass
+    process_filings(debug=False)
