@@ -45,7 +45,7 @@ def html_to_text(file_text):
     """Sanitizes HTML/XML by removing all tags"""
     pattern = re.compile(r'<.+?>')
     file_text = re.sub(pattern, ' ', file_text)
-    file_test = re.sub(re.compile(r'\s+'), ' ', file_text)
+    file_text = re.sub(re.compile(r'\s+'), ' ', file_text)
 
     return file_text
 
@@ -69,6 +69,7 @@ def remove_words_over_length_n(text_to_insert, n=20):
 
 def time_left(i, start_time):
     """Calculates the amount of time left needed to download and parse all the filings"""
+    _, _, _, session, _, filings = connect_db()
     rows_left = session.query(
         filings.c.filing_id,
         filings.c.path).filter(
@@ -150,7 +151,7 @@ def dl_filing(debug):
         baseurl = 'https://www.sec.gov/Archives/'
 
         if debug:
-            response = requests.get(baseurl + specified_path)
+            response = requests.get(baseurl + 'edgar/data/826773/0001104659-13-062460.txt')
         else:
             response = requests.get(baseurl + path)
 
@@ -174,9 +175,7 @@ def dl_filing(debug):
     engine.dispose()
 
 
-def process_filings(
-        debug=False,
-        specified_path="edgar/data/826773/0001104659-13-062460.txt"):
+def process_filings(debug=False):
     """Download filings in parallel, sanitize and loaded to the db"""
 
     # Download filings

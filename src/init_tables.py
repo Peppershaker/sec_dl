@@ -7,7 +7,7 @@ from CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME
 import pandas as pd
 
 
-def init_tables():
+def init_tables(): 
     """Initializes the filings and companies database tables"""
     # Ask for confirmation before dropping tables
     accept = False
@@ -81,7 +81,8 @@ def load_companies(engine):
 
 
 def load_filing_types(engine):
-    """Loads the SEC filing type table which contains a list of filing types to download from CSV to the database"""
+    """Loads the SEC filing type table which contains a list of filing types 
+    to download from CSV to the database"""
     with engine.connect() as connection:
         filing_types_df = pd.read_csv('../data/filing_types.csv')
         filing_types_df.index.names = ['type_id']

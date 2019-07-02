@@ -7,5 +7,6 @@ DB_HOST="localhost"
 # Start and end year of filings to grab
 FILING_START_YR=2012
 
-# Parallel download
+# Number of parallel download. Recommand default value of 20. The script is text
+# processing bottle necked
 CONCURRENT_WORKERS=20
