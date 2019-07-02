@@ -12,30 +12,32 @@ from bs4 import BeautifulSoup
 from CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME
 
 
-def connect_db():
+def connect_db(create_extension=False, engine_only=False):
     """Make connection to the db"""
 
     engine = create_engine(
         f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}",
         echo=False)
-    connection = engine.connect()
-    metadata = MetaData(bind=engine)
-    Session = sessionmaker()
-    session = Session()
 
-    print("LOG: SUCCESSFUL CONNECTION")
-    # Make get requests to the SEC server to pull the data, and then once
-    # received, append to database
-    filings = Table('filings', metadata, autoload=True)
+    if not engine_only:
+        connection = engine.connect()
+        metadata = MetaData(bind=engine)
+        Session = sessionmaker()
+        session = Session()
+        filings = Table('filings', metadata, autoload=True)
 
-    # Enable the random select extension in Postgresql
     try:
         # tsm_system_rows extension returns random rows from the database
-        connection.execute("CREATE EXTENSION tsm_system_rows;")
+        if create_extension:
+            connection.execute("CREATE EXTENSION tsm_system_rows;")
     except BaseException:
         print("tsm_system_rows extension already enabled")
 
-    return engine, metadata, Session, session, connection, filings
+    if engine_only:
+        return engine
+
+    else:
+        return engine, metadata, Session, session, connection, filings
 
 
 def html_to_text(file_text):
@@ -111,20 +113,20 @@ def remove_embedded_files(text_filing):
 
     return text_to_insert
 
-def dl_filing(arg_tup):
+def dl_filing(debug):
     """Looks up a filing_id from unscraped_filings table and updates the filings table"""
 
     # Quary the db to get a row, note that the Postgresql SYSTEM_ROWS function is fast but does not return truly random rows,
     # To avoid the probability of grabbing the same row as another process, we grab 10 rows and randomly pick one
     # Please refer to Postgresql documentation for more detail
-    debug, engine = arg_tup
-    
+    engine = connect_db(engine_only=True, create_extension=False)
+
     with engine.connect() as connection:
         stmt = """
-                    SELECT A.filing_id, B.path FROM (
-                        SELECT filing_id FROM unscraped_filings TABLESAMPLE SYSTEM_ROWS (10)
-                        ) A
-                        INNER JOIN filings B on A.filing_id = B.filing_id
+        SELECT A.filing_id, B.path FROM (
+            SELECT filing_id FROM unscraped_filings TABLESAMPLE SYSTEM_ROWS (10)
+            ) A
+            INNER JOIN filings B on A.filing_id = B.filing_id
         """
         rows_to_build = connection.execute(stmt)
 
@@ -165,6 +167,8 @@ def dl_filing(arg_tup):
                                             row_filing_id).values({'text': text_to_insert})
             connection.execute(stmt)
             #print("LOG:", datetime.datetime.now(), "Done")
+        
+    engine.dispose()
     
 
 def process_filings(
@@ -181,20 +185,11 @@ def process_filings(
         calc_time_left=False):
     """Takes in filings URL to download and makes get request to the 
     SEC server. The downloaded text is then sanitized and loaded to the db"""
-    i = 1
-    start_time = datetime.datetime.now()
-
+    
+    # Download filings
     pool = multiprocessing.Pool(20)
-
-    # First get all the filings that still needs to be scraped
-    still_has_filings = True
-    while still_has_filings:
-        if calc_time_left:
-            # Calculates time left ever 100 filings downloaded
-            time_left(i, start_time)
-
-        pool.map(dl_filing, ((debug, engine) for x in range(100)) )
-        i += 1
+    while True:
+        pool.map_async(dl_filing, (debug for x in range(1000)))
 
 
 
