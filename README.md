@@ -101,6 +101,13 @@ vim sec_dl/data/filing_tyoe.csv
 
 The default setting downloads pretty much all valuable filing types that can be data mined.
 
+## Tracking Download Progress
+You can invoke the tracker script to mointor download progress and get an estimate of the time left. 
+First navigate to the project root folder.
+```
+python3 -m sec_dl.utils.monitor_progress
+```
+
 ## Author
 
 * **Victor Xu**
