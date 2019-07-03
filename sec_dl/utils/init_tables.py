@@ -1,10 +1,11 @@
+import os
+import pandas as pd
+
 from sqlalchemy import create_engine, ForeignKey, Index
 from sqlalchemy import MetaData, Table, String, Column, Text, Date, Boolean, Integer, Float
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.sql import text
-from CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME
-
-import pandas as pd
+from sec_dl.config.CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME
 
 
 def init_tables(): 
@@ -22,7 +23,7 @@ def init_tables():
 
     with engine.connect() as connection:
         # Dropping the tables if they already exist
-        for table in ['companies', 'filings']:
+        for table in ['companies', 'filings', 'filing_types', 'unscraped_filings']:
             connection.execute(
                 "DROP TABLE IF EXISTS {} CASCADE;".format(table))
 
@@ -71,7 +72,8 @@ def init_tables():
 def load_companies(engine):
     """Loads the companies table from CSV to the database"""
     with engine.connect() as connection:
-        companies_df = pd.read_csv('../data/companies.csv')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        companies_df = pd.read_csv(current_dir + '/../data/companies.csv')
         companies_df.to_sql(
             'companies',
             connection,
@@ -84,7 +86,12 @@ def load_filing_types(engine):
     """Loads the SEC filing type table which contains a list of filing types 
     to download from CSV to the database"""
     with engine.connect() as connection:
-        filing_types_df = pd.read_csv('../data/filing_types.csv')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        filing_types_df = pd.read_csv(current_dir + '/../data/filing_types.csv',
+        index_col='type_id'
+        )
+        
         filing_types_df.index.names = ['type_id']
         filing_types_df.to_sql(
             'filing_types',
@@ -92,8 +99,8 @@ def load_filing_types(engine):
             if_exists='append',
             index=True)
 
-
-if __name__ == "__main__":
+def init_all_tables():
+    """Initialize all tables"""
     engine = init_tables()
     load_companies(engine)
     load_filing_types(engine)

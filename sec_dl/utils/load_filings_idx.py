@@ -2,10 +2,11 @@ import datetime
 import requests
 import pandas as pd
 import time
+
 from io import StringIO
-from scrape_all_filings import connect_db
 from sqlalchemy import Integer, String, Date
-from CONSTANTS import FILING_START_YR
+from sec_dl.utils.scrape_all_filings import connect_db
+from sec_dl.config.CONSTANTS import FILING_START_YR
 
 def load_filings_table_via_sec():
     """Downloads the filing index file from SEC, which contains company information and filings url, and loads into database.
@@ -87,10 +88,12 @@ def create_unscraped_table():
         CREATE TRIGGER trigger_update_unscraped
         AFTER UPDATE ON filings
         FOR EACH ROW
-        EXECUTE PROCEDURE function function_delete_filing_id();
+        EXECUTE PROCEDURE function_delete_filing_id();
         """
         connection.execute(stmt)
 
-if __name__ == "__main__":
+
+def load_filings():
+    """Runs the script, download filings index file from SEC server and loads to db"""
     load_filings_table_via_sec()
     create_unscraped_table()

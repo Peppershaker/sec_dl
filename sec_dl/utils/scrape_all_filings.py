@@ -1,28 +1,26 @@
 import re
 import datetime
 import unicodedata
-import requests
-import time
-import numpy as np
 import multiprocessing
+import requests
+import numpy as np
+
 from sqlalchemy import create_engine
-from sqlalchemy import MetaData, Table, String, Column, Text, DateTime, Boolean, Integer, Float, Date
+from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
-from CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME, CONCURRENT_WORKERS
+from sec_dl.config.CONSTANTS import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME, CONCURRENT_WORKERS
 
 
 def connect_db(create_extension=False, engine_and_filings_only=False):
     """Make connection to the db"""
 
-    if engine_and_filings_only:
-        engine = create_engine(
-            f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}",
-            echo=False)
-        metadata = MetaData(bind=engine)
-        filings = Table('filings', metadata, autoload=True)
+    engine_path = f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    engine = create_engine(engine_path,echo=False)
+    metadata = MetaData(bind=engine)
+    filings = Table('filings', metadata, autoload=True)
 
-    else:
+    if not engine_and_filings_only:
         connection = engine.connect()
         Session = sessionmaker()
         session = Session()
@@ -119,8 +117,9 @@ def remove_embedded_files(text_filing):
 def dl_filing(debug):
     """Looks up a filing_id from unscraped_filings table and updates the filings table"""
 
-    # Quary the db to get a row, note that the Postgresql SYSTEM_ROWS function is fast but does not return truly random rows,
-    # To avoid the probability of grabbing the same row as another process, we grab 10 rows and randomly pick one
+    # Quary the db to get a row, note that the Postgresql SYSTEM_ROWS function is fast
+    # but does not return truly random rows, To avoid the probability of grabbing
+    # the same row as another process, we grab 10 rows and randomly pick one
     # Please refer to Postgresql documentation for more detail
     engine, filings = connect_db(
         engine_and_filings_only=True, create_extension=False)
