@@ -1,5 +1,8 @@
 # SEC dl
 
+![sec_dl_graphic](https://user-images.githubusercontent.com/15576531/60568103-d6907980-9d39-11e9-806c-f5e64f6e3c97.jpg)
+
+
 A fully automated and configurable solution to download SEC filings and stores it in a Posgresql database. The filing text is automatically tokenized and indexed, and therefore supports near real time full text search.
 A dockerized adminer server is also spun up to provide some basic UI for the database
 
