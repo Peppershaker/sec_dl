@@ -1,12 +1,13 @@
-## Description
-A fully automated and configurable solution to download SEC filings and stores it in a Posgresql database. The filing text is automatically tokenized and indexed, and therefore supports near real time full text search. A dockerized adminer server is also spun up to provide some basic UI for the database.
+# SEC dl
 
-## Instruction
+A fully automated and configurable solution to download SEC filings and stores it in a Posgresql database. The filing text is automatically tokenized and indexed, and therefore supports near real time full text search. A dockerized adminer server is also spun up to provide some basic UI for the database
+
+## Deployment
+
 1)	First clone this repo and navigate to the root of the project director.
 ```
 git clone git@github.com:Peppershaker/sec_dl.git
 ```
-
 
 2)	Config the **docker-compose.yml** file by specifying the location in which you want to store the database files.
 
@@ -28,7 +29,6 @@ Set the path to save the database files. The Postgres database runs in a docker 
 	- path_on_host_machine:/var/lib/postgresql/data
 ```
 
-
 3)	Set database credentials and other script settings.
 
 ```	
@@ -41,8 +41,15 @@ Change the **FILING_START_YEAR** variable to specify the time window of filings 
 
 The variable **CONCURRENT_WORKERS** defines the number of downloads & text parsing jobs to run in parallel. However, you will likely be CPU bottle necked, as opposed to network IO. 20 workers about maxes out my Skylake Dual Core CPU.
 
-
 4)	Run the startup script located in the project root folder.
 ```
 source run.sh
 ```
+
+## Authors
+
+* **Victor Xu** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
