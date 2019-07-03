@@ -80,12 +80,11 @@ If this project is going to be used in live trading, I **strongly** recommand yo
 
 #### Tips on Joining Company Identifier Data
 As discussed, tickers change over time, so when joing identifier data, pay special attention to the following as they have all been observed to change the Ticker.
--M&A
--Bankrupcy
--Delisting
--Relisting
--Company Name Change / Ticker Change
--Restructuring
+* M&A
+* Bankrupcy
+* Delisting / Relisting
+* Company Name Change / Ticker Change
+* Restructuring
 
 #### Changing the Universe of Stocks of Interest
 The supplied companies.csv file contains ticker for nearly all US listed companies with under $1B capitalization as of ~ March 2019. Non operating companies such as ETFs and various financial asset holdings companies are removed.
