@@ -1,4 +1,4 @@
-# Description
+## Description
 A fully automated and configurable solution to download SEC filings and stores it in a Posgresql database. The filing text is automatically tokenized and indexed, and therefore supports near real time full text search. A dockerized adminer server is also spun up to provide some basic UI for the database.
 
 ## Instruction
@@ -21,7 +21,7 @@ POSTGRES_PASSWORD:[set_password]
 POSTGRES_DB:[set_db_name]
 ```
 
-	Set the path to save the database files. The Postgres database runs in a docker container and is stateless, this means it mounts a directory from your host machine to the docker container in order to access the database files. You will need to specify the path by replacing path_on_host_machine. Leave the second portion :/var/lib/... as is (unless you know what you're doing)
+Set the path to save the database files. The Postgres database runs in a docker container and is stateless, this means it mounts a directory from your host machine to the docker container in order to access the database files. You will need to specify the path by replacing path_on_host_machine. Leave the second portion :/var/lib/... as is (unless you know what you're doing)
 
 ```
 -volumes:
@@ -35,11 +35,11 @@ POSTGRES_DB:[set_db_name]
 vim sec_dl/config/CONSTANTS.py
 ```
 
-	Populate database username, password, and name as per step 2. Leave **DB_HOST** as localhost.
+Populate database username, password, and name as per step 2. Leave **DB_HOST** as localhost.
 
-	Change the **FILING_START_YEAR** variable to specify the time window of filings to download. The script will download all filings from **FILING_START_YEAR** to now. Depending on the size of your stock universe, you should allocate approximately 5GB of disk space per 1000 tickers per year.
+Change the **FILING_START_YEAR** variable to specify the time window of filings to download. The script will download all filings from **FILING_START_YEAR** to now. Depending on the size of your stock universe, you should allocate approximately 5GB of disk space per 1000 tickers per year.
 
-	The variable **CONCURRENT_WORKERS** defines the number of downloads & text parsing jobs to run in parallel. However, you will likely be CPU bottle necked, as opposed to network IO. 20 workers about maxes out my Skylake Dual Core CPU.
+The variable **CONCURRENT_WORKERS** defines the number of downloads & text parsing jobs to run in parallel. However, you will likely be CPU bottle necked, as opposed to network IO. 20 workers about maxes out my Skylake Dual Core CPU.
 
 
 4)	Run the startup script located in the project root folder.
